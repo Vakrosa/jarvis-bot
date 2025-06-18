@@ -1,12 +1,11 @@
 from flask import Flask, request
 import requests
-import os
 
 app = Flask(__name__)
 
-BOT_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+BOT_TOKEN = "ТУТ_ВСТАВ_СВІЙ_НОВИЙ_ТОКЕН"  # встав без пробілів, лапок не чіпай
 
-# Реєструємо webhook (можна пропустити, якщо вже зареєстровано)
+# встановлюємо webhook один раз при запуску
 requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/setWebhook?url=https://jarvis-bot-zk0a.onrender.com/telegram-webhook")
 
 def send_message(chat_id, text):
