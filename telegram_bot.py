@@ -1,26 +1,29 @@
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
-import os
+from flask import Flask, request
+import requests
 
-BOT_TOKEN = os.environ.get("TELEGRAM_TOKEN")  # Токен з environment variables
+app = Flask(__name__)
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Привіт! Я Jarvis 🤖 Напиши мені що завгодно!")
+BOT_TOKEN = "тут_твой_токен"
 
-async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_message = update.message.text
-    await update.message.reply_text(f"Ви написали: {user_message}")
+# Поставити webhook (один раз при запуску)
+requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/setWebhook?url=https://jarvis-bot-zk0a.onrender.com/telegram-webhook")
 
-def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+def send_message(chat_id, text):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    payload = {"chat_id": chat_id, "text": f"Ви написали: {text}"}
+    headers = {"Content-Type": "application/json"}
+    requests.post(url, json=payload, headers=headers)
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+@app.route("/telegram-webhook", methods=["POST"])
+def webhook():
+    data = request.get_json(force=True)
+    print("✅ Отримано:", data)
 
-    print("✅ Бот запущено через polling")
-    app.run_polling()
+    if "message" in data:
+        chat_id = data["message"]["chat"]["id"]
+        text = data["message"].get("text", "")
+        send_message(chat_id, text)
+    return "ok", 200
 
 if __name__ == "__main__":
-    main()
-
-
+    app.run(host="0.0.0.0", port=5000)
